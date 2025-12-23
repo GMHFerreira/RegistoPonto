@@ -19,3 +19,16 @@ for (let i = 0; i < 12; i++) {
   monthSelect.appendChild(option);
 }
 
+const qrButton = document.getElementById("qrButton");
+const qrModal = document.getElementById("qrModal");
+const closeQrButton = document.getElementById("closeQrButton");
+
+qrButton.addEventListener("click", () => {
+  qrModal.classList.remove("hidden");
+});
+
+closeQrButton.addEventListener("click", () => {
+  qrModal.classList.add("hidden");
+});
+
+

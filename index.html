@@ -15,9 +15,7 @@
     <div class="header-controls">
       <label>
         Mês:
-        <select id="monthSelect">
-          <!-- Options added via JS -->
-        </select>
+        <select id="monthSelect"></select>
       </label>
 
       <label>
@@ -25,14 +23,33 @@
         <input type="email" id="emailInput" placeholder="Email do gestor">
       </label>
 
-      <button id="qrButton">QR App</button>
+      <button id="qrButton" title="Clique para abrir o QR code e instalar a aplicação">Obter app</button>
+
     </div>
   </header>
 
-  <main>
-    <!-- Future form for adding entries -->
-  </main>
+  <main></main>
 
+  <!-- QR Code Modal -->
+  <div id="qrModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Instalar aplicação</h2>
+
+      <img
+        src="qrcode.png"
+        alt="QR Code para instalar a aplicação"
+        class="qr-image"
+      />
+
+      <p>
+        Digitalize este QR noutro dispositivo para abrir e instalar a aplicação.
+      </p>
+
+      <button id="closeQrButton">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Script LAST -->
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,21 +1,27 @@
+/* Base styles */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
+  background-color: #ffffff;
 }
 
+/* Header */
 .app-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 20px;
   background-color: #f0f0f0;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .logo {
   height: 40px; /* small and unobtrusive */
 }
 
+/* Header controls */
 .header-controls {
   display: flex;
   align-items: center;
@@ -27,24 +33,163 @@ body {
   display: flex;
   flex-direction: column;
   font-size: 14px;
+  width: 200px; /* same width for month and email labels */
 }
 
 .header-controls input,
-.header-controls select,
-.header-controls button {
-  padding: 5px 10px;
+.header-controls select {
+  width: 100%; /* fill label width */
+  max-width: 100%;
+  padding: 6px 10px;
   font-size: 14px;
   margin-top: 3px;
+  box-sizing: border-box;
 }
 
+.header-controls button {
+  padding: 6px 10px;
+  font-size: 14px;
+  margin-top: 3px;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+/* QR button */
 #qrButton {
   cursor: pointer;
-  background-color: #1f2937;
+  background-color: #2563eb; /* primary CTA */
   color: white;
   border: none;
   border-radius: 4px;
-  height: 32px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
 }
+
 #qrButton:hover {
+  background-color: #1d4ed8;
+}
+
+/* Modal overlay */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Hidden state */
+.hidden {
+  display: none;
+}
+
+/* Modal content */
+.modal-content {
+  background: #ffffff;
+  width: min(90vw, 420px);
+  max-height: 90vh;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Modal title */
+.modal-content h2 {
+  margin: 0;
+  font-size: 18px;
+  text-align: center;
+}
+
+/* QR image */
+.qr-image {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+/* Description text */
+.modal-content p {
+  font-size: 14px;
+  text-align: center;
+  margin: 0;
+  max-width: 280px;
+}
+
+/* Close button */
+#closeQrButton {
+  margin-top: auto;
+  padding: 10px 16px;
+  font-size: 14px;
+  background-color: #1f2937;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#closeQrButton:hover {
   background-color: #374151;
+}
+
+/* Responsive styles */
+
+/* Mobile: phones */
+@media (max-width: 480px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+    padding: 0 10px; /* prevent touching edges */
+    box-sizing: border-box;
+  }
+
+  .header-controls label,
+  .header-controls input,
+  .header-controls select,
+  .header-controls button {
+    width: 100%; /* fill container width */
+  }
+
+  #qrButton {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .modal-content {
+    width: 90vw;
+    max-width: 90vw;
+    padding: 15px;
+  }
+
+  .qr-image {
+    max-width: 90vw;
+  }
+}
+
+/* Tablet: 481px–1024px */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .app-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
+  }
 }
