@@ -23,7 +23,8 @@
         <input type="email" id="emailInput" placeholder="Email do gestor">
       </label>
 
-      <button id="qrButton" title="Clique para abrir o QR code e instalar a aplicação">Obter app</button>
+      <button id="qrButton" title="Clique para abrir o QR code e compartilhar a aplicação">QR Code</button>
+      <button id="installButton" title="Clique para instalar a aplicação" hidden>Instalar App</button>
 
     </div>
   </header>
@@ -34,22 +35,12 @@
   <div id="qrModal" class="modal hidden">
     <div class="modal-content">
       <h2>Instalar aplicação</h2>
-
-      <img
-        src="qrcode.png"
-        alt="QR Code para instalar a aplicação"
-        class="qr-image"
-      />
-
-      <p>
-        Digitalize este QR noutro dispositivo para abrir e instalar a aplicação.
-      </p>
-
+      <img src="qrcode.png" alt="QR Code para instalar a aplicação" class="qr-image" />
+      <p>Digitalize este QR noutro dispositivo para abrir e instalar a aplicação.</p>
       <button id="closeQrButton">Fechar</button>
     </div>
   </div>
 
-  <!-- Script LAST -->
   <script src="app.js"></script>
 </body>
 </html>
