@@ -14,58 +14,57 @@ body {
 /* Header */
 .app-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 1rem;
+  gap: 1rem;
   background-color: #f0f0f0;
-  gap: 20px;
-  flex-wrap: wrap;
 }
 
 .logo {
-  height: 40px; /* small and unobtrusive */
+  height: 40px;
+  flex-shrink: 0;
 }
 
 /* Header controls */
 .header-controls {
   display: flex;
-  align-items: center;
-  gap: 15px;
   flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 1 1 auto;
 }
 
 .header-controls label {
   display: flex;
   flex-direction: column;
-  font-size: 14px;
-  width: 200px; /* same width for month and email */
+  font-size: 0.875rem;
+  flex: 1 1 150px; /* flexible width */
+  min-width: 120px;
 }
 
 .header-controls input,
 .header-controls select {
   width: 100%;
-  padding: 6px 10px;
-  font-size: 14px;
-  margin-top: 3px;
-  box-sizing: border-box;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
 }
 
-/* Header buttons: QR & Install */
+/* Header buttons */
 .header-controls button {
   display: flex;
-  align-items: center;       /* vertically center content */
-  justify-content: center;   /* horizontally center content */
-  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   height: 38px;
-  padding: 0 12px;
-  font-size: 14px;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
   font-weight: 500;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  min-width: 120px;
-  line-height: 1;            /* ensures text doesn't shift vertically */
-  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 /* QR button */
@@ -74,9 +73,7 @@ body {
   color: white;
   border: none;
 }
-#qrButton:hover {
-  background-color: #1d4ed8;
-}
+#qrButton:hover { background-color: #1d4ed8; }
 
 /* Install button */
 #installButton {
@@ -84,9 +81,7 @@ body {
   color: white;
   border: none;
 }
-#installButton:hover {
-  background-color: #059669;
-}
+#installButton:hover { background-color: #059669; }
 
 /* Modal overlay */
 .modal {
@@ -99,75 +94,64 @@ body {
   z-index: 1000;
 }
 
-/* Hidden state */
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 /* Modal content */
 .modal-content {
   background: #ffffff;
-  width: min(90vw, 420px);
+  width: 90%;
+  max-width: 400px;
   max-height: 90vh;
-  padding: 20px;
+  padding: 1rem;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .modal-content h2 {
-  margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   text-align: center;
+  margin: 0;
 }
 
 .qr-image {
   width: 100%;
-  max-width: 320px;
+  max-width: 300px;
   aspect-ratio: 1 / 1;
   object-fit: contain;
 }
 
 .modal-content p {
-  font-size: 14px;
+  font-size: 0.875rem;
   text-align: center;
   margin: 0;
-  max-width: 280px;
 }
 
 #closeQrButton {
   margin-top: auto;
-  padding: 10px 16px;
-  font-size: 14px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
   background-color: #1f2937;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
 }
+#closeQrButton:hover { background-color: #374151; }
 
-#closeQrButton:hover {
-  background-color: #374151;
-}
-
-/* Responsive */
-
-/* Mobile: up to 480px */
-@media (max-width: 480px) {
+/* Responsive: let flex handle most sizing, avoid hardcoded widths */
+@media (max-width: 600px) {
   .app-header {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    align-items: stretch;
   }
 
   .header-controls {
     flex-direction: column;
     width: 100%;
-    gap: 10px;
-    padding: 0 10px;
+    gap: 0.5rem;
   }
 
   .header-controls label,
@@ -175,23 +159,5 @@ body {
   .header-controls select,
   .header-controls button {
     width: 100%;
-  }
-
-  .modal-content {
-    width: 90vw;
-    padding: 15px;
-  }
-
-  .qr-image {
-    max-width: 90vw;
-  }
-}
-
-/* Tablet: 481px–1024px */
-@media (min-width: 481px) and (max-width: 1024px) {
-  .app-header {
-    flex-direction: row;
-    align-items: center;
-    gap: 15px;
   }
 }
