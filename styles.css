@@ -54,10 +54,10 @@ body {
 /* Header buttons */
 .header-controls button {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: center;       /* vertical center */
+  justify-content: center;   /* horizontal center */
   gap: 0.5rem;
-  height: 38px;
+  height: 40px;              /* slightly taller for touch */
   padding: 0 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
@@ -65,7 +65,11 @@ body {
   cursor: pointer;
   transition: background-color 0.2s ease;
   flex: 0 0 auto;
+  line-height: 1;            /* text centered within flex */
+  text-align: center;
+  min-width: 120px;
 }
+
 
 /* QR button */
 #qrButton {

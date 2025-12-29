@@ -48,7 +48,7 @@ const installButton = document.getElementById("installButton");
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  installButton.style.display = "inline-flex"; // show install button
+  installButton.hidden = false; // show install button
 });
 
 installButton.addEventListener("click", async () => {
@@ -57,6 +57,6 @@ installButton.addEventListener("click", async () => {
     const choice = await deferredPrompt.userChoice;
     console.log("User choice:", choice.outcome);
     deferredPrompt = null;
-    installButton.style.display = "none";
+    installButton.hidden = true;
   }
 });
