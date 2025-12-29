@@ -12,17 +12,18 @@ if ("serviceWorker" in navigator) {
 // -----------------------------
 // Populate month select (12 months back)
 // -----------------------------
-const monthSelect = document.getElementById("monthSelect");
-const now = new Date();
-
-for (let i = 0; i < 12; i++) {
-  const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-  const monthStr = date.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
-  const option = document.createElement('option');
-  option.value = date.toISOString().slice(0,7);
-  option.textContent = monthStr;
-  monthSelect.appendChild(option);
+function populateMonthSelect(selectEl, monthsBack = 12) {
+  const now = new Date();
+  for (let i = 0; i < monthsBack; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthStr = date.toLocaleString('pt-PT', { month: 'long', year: 'numeric' });
+    const option = document.createElement('option');
+    option.value = date.toISOString().slice(0,7);
+    option.textContent = monthStr;
+    selectEl.appendChild(option);
+  }
 }
+populateMonthSelect(document.getElementById("monthSelect"));
 
 // -----------------------------
 // QR Modal
@@ -31,12 +32,10 @@ const qrButton = document.getElementById("qrButton");
 const qrModal = document.getElementById("qrModal");
 const closeQrButton = document.getElementById("closeQrButton");
 
-qrButton.addEventListener("click", () => {
-  qrModal.classList.remove("hidden");
-});
-
-closeQrButton.addEventListener("click", () => {
-  qrModal.classList.add("hidden");
+qrButton.addEventListener("click", () => qrModal.classList.remove("hidden"));
+closeQrButton.addEventListener("click", () => qrModal.classList.add("hidden"));
+qrModal.addEventListener("click", (e) => {
+  if (e.target === qrModal) qrModal.classList.add("hidden");
 });
 
 // -----------------------------
@@ -52,11 +51,9 @@ window.addEventListener("beforeinstallprompt", (e) => {
 });
 
 installButton.addEventListener("click", async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-    console.log("User choice:", choice.outcome);
-    deferredPrompt = null;
-    installButton.style.display = "none";
-  }
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installButton.style.display = "none";
 });
