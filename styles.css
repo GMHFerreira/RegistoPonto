@@ -14,62 +14,59 @@ body {
 /* Header */
 .app-header {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  gap: 1rem;
+  padding: 10px 20px;
   background-color: #f0f0f0;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .logo {
-  height: 40px;
-  flex-shrink: 0;
+  height: 40px; /* small and unobtrusive */
 }
 
 /* Header controls */
 .header-controls {
   display: flex;
+  align-items: center;
+  gap: 15px;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  flex: 1 1 auto;
 }
 
 .header-controls label {
   display: flex;
   flex-direction: column;
-  font-size: 0.875rem;
-  flex: 1 1 150px; /* flexible width */
-  min-width: 120px;
+  font-size: 14px;
+  width: 200px; /* same width for month and email */
 }
 
 .header-controls input,
 .header-controls select {
   width: 100%;
-  padding: 0.5rem;
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
+  padding: 6px 10px;
+  font-size: 14px;
+  margin-top: 3px;
+  box-sizing: border-box;
 }
 
-/* Header buttons */
+/* Header buttons: QR & Install */
 .header-controls button {
   display: flex;
-  align-items: center;       /* vertical center */
-  justify-content: center;   /* horizontal center */
-  gap: 0.5rem;
-  height: 40px;              /* slightly taller for touch */
-  padding: 0 0.75rem;
-  font-size: 0.875rem;
+  align-items: center;       /* vertically center content */
+  justify-content: center;   /* horizontally center content */
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 14px;
   font-weight: 500;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
-  flex: 0 0 auto;
-  line-height: 1;            /* text centered within flex */
-  text-align: center;
   min-width: 120px;
+  line-height: 1;            /* ensures text doesn't shift vertically */
+  box-sizing: border-box;
 }
-
 
 /* QR button */
 #qrButton {
@@ -77,7 +74,9 @@ body {
   color: white;
   border: none;
 }
-#qrButton:hover { background-color: #1d4ed8; }
+#qrButton:hover {
+  background-color: #1d4ed8;
+}
 
 /* Install button */
 #installButton {
@@ -85,7 +84,9 @@ body {
   color: white;
   border: none;
 }
-#installButton:hover { background-color: #059669; }
+#installButton:hover {
+  background-color: #059669;
+}
 
 /* Modal overlay */
 .modal {
@@ -98,64 +99,75 @@ body {
   z-index: 1000;
 }
 
-.hidden { display: none; }
+/* Hidden state */
+.hidden {
+  display: none;
+}
 
 /* Modal content */
 .modal-content {
   background: #ffffff;
-  width: 90%;
-  max-width: 400px;
+  width: min(90vw, 420px);
   max-height: 90vh;
-  padding: 1rem;
+  padding: 20px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
+  gap: 12px;
 }
 
 .modal-content h2 {
-  font-size: 1.125rem;
-  text-align: center;
   margin: 0;
+  font-size: 18px;
+  text-align: center;
 }
 
 .qr-image {
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
   aspect-ratio: 1 / 1;
   object-fit: contain;
 }
 
 .modal-content p {
-  font-size: 0.875rem;
+  font-size: 14px;
   text-align: center;
   margin: 0;
+  max-width: 280px;
 }
 
 #closeQrButton {
   margin-top: auto;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 10px 16px;
+  font-size: 14px;
   background-color: #1f2937;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
-#closeQrButton:hover { background-color: #374151; }
 
-/* Responsive: let flex handle most sizing, avoid hardcoded widths */
-@media (max-width: 600px) {
+#closeQrButton:hover {
+  background-color: #374151;
+}
+
+/* Responsive */
+
+/* Mobile: up to 480px */
+@media (max-width: 480px) {
   .app-header {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 10px;
   }
 
   .header-controls {
     flex-direction: column;
     width: 100%;
-    gap: 0.5rem;
+    gap: 10px;
+    padding: 0 10px;
   }
 
   .header-controls label,
@@ -163,5 +175,23 @@ body {
   .header-controls select,
   .header-controls button {
     width: 100%;
+  }
+
+  .modal-content {
+    width: 90vw;
+    padding: 15px;
+  }
+
+  .qr-image {
+    max-width: 90vw;
+  }
+}
+
+/* Tablet: 481px–1024px */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .app-header {
+    flex-direction: row;
+    align-items: center;
+    gap: 15px;
   }
 }

@@ -1,65 +1,46 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modal Test</title>
-  <style>
-    /* Basic reset */
-    *, *::before, *::after { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-
-    /* Modal overlay */
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.6);
-      display: none; /* hidden by default */
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      margin: 5px;
-      cursor: pointer;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registo do Ponto</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1f2937" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <header class="app-header">
+    <img src="logo.png" alt="Registo do Ponto Logo" class="logo">
 
-  <button id="openBtn">Abrir Modal</button>
+    <div class="header-controls">
+      <label>
+        Mês:
+        <select id="monthSelect"></select>
+      </label>
 
-  <div id="modal" class="modal">
+      <label>
+        Email:
+        <input type="email" id="emailInput" placeholder="Email do gestor">
+      </label>
+
+      <button id="qrButton" title="Clique para abrir o QR code e compartilhar a aplicação">QR Code</button>
+      <button id="installButton" title="Clique para instalar a aplicação" hidden>Instalar App</button>
+
+    </div>
+  </header>
+
+  <main></main>
+
+  <!-- QR Code Modal -->
+  <div id="qrModal" class="modal hidden">
     <div class="modal-content">
-      <h2>Teste do Modal</h2>
-      <p>Este modal deve estar oculto inicialmente.</p>
-      <button id="closeBtn">Fechar</button>
+      <h2>Instalar aplicação</h2>
+      <img src="qrcode.png" alt="QR Code para instalar a aplicação" class="qr-image" />
+      <p>Digitalize este QR noutro dispositivo para abrir e instalar a aplicação.</p>
+      <button id="closeQrButton">Fechar</button>
     </div>
   </div>
 
-  <script>
-    const modal = document.getElementById('modal');
-    const openBtn = document.getElementById('openBtn');
-    const closeBtn = document.getElementById('closeBtn');
-
-    openBtn.addEventListener('click', () => {
-      modal.style.display = 'flex';
-    });
-
-    closeBtn.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
-  </script>
-
+  <script src="app.js"></script>
 </body>
 </html>
