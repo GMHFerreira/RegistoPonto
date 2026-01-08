@@ -1,6 +1,4 @@
 import { apiLogin } from './api.js';
-import { switchView } from './app.js';
-import { renderCalendarView } from './calendar.js';
 
 export async function renderLoginView(container) {
   const resp = await fetch('/src/html/login.html');
@@ -20,8 +18,14 @@ export async function renderLoginView(container) {
     try {
       const res = await apiLogin(userId, password);
 
-      // Just switch to calendar view based on role
-      switchView(renderCalendarView, res.role);
+      // Dynamically import the correct calendar module based on role
+      if (res.role === 'manager') {
+        const { initManagerCalendar } = await import('./manager.js');
+        await initManagerCalendar(container);
+      } else {
+        const { initUserCalendar } = await import('./user.js');
+        await initUserCalendar(container);
+      }
 
     } catch (err) {
       console.error(err);

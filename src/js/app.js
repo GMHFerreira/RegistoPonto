@@ -1,10 +1,9 @@
 // -----------------------------
-// app.js — main controller (simplified)
+// app.js — main controller (refactored for user/manager split)
 // -----------------------------
 
 import { getSession, logout } from './db.js';
 import { renderLoginView } from './login.js';
-import { renderCalendarView } from './calendar.js';
 
 const mainContainer = document.getElementById("appMain");
 
@@ -51,16 +50,24 @@ export function switchView(viewFunc, ...args) {
 // -----------------------------
 // Load initial view on DOM ready
 // -----------------------------
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const session = await getSession();
 
-  if (session) {
-    renderCalendarView(mainContainer, session.role);
-  } else {
+  if (!session) {
+    const { renderLoginView } = await import('./login.js');
     renderLoginView(mainContainer);
+    return;
   }
 
-  // Attach logout handler globally
+  // Dynamically import and initialize the correct role module
+  if (session.role === 'manager') {
+    const { initManagerCalendar } = await import('./manager.js');
+    await initManagerCalendar(mainContainer);
+  } else {
+    const { initUserCalendar } = await import('./user.js');
+    await initUserCalendar(mainContainer);
+  }
+
   setupGlobalLogout();
 });
 
@@ -84,7 +91,7 @@ function setupGlobalLogout() {
 
   logoutBtn.hidden = false; // always show once a user is logged in
 
-  // Remove any old listeners (to prevent double-binding)
+  // Remove any old listeners to prevent double-binding
   const newLogoutBtn = logoutBtn.cloneNode(true);
   logoutBtn.replaceWith(newLogoutBtn);
 

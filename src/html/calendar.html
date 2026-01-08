@@ -15,12 +15,19 @@
     <!-- calendar grid will live here later -->
   </main>
 
-  <!-- User-only: actions (e.g. send calendar by email) -->
+  <!-- Actions shared by both user and manager -->
   <footer
     id="calendarActions"
     class="calendar-actions"
-    hidden
   >
-    <!-- injected dynamically -->
+    <button type="button" id="saveChanges" title="Guardar alterações">
+      💾
+    </button>
+    <button type="button" id="refreshCalendarBtn" title="Atualizar calendário">
+      🔄
+    </button>
+    <button type="button" id="exportCalendarBtn" title="Exportar calendário">
+      📤
+    </button>
   </footer>
 </div>
