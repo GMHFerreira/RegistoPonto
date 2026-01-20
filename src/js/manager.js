@@ -1,163 +1,208 @@
-// manager.js — manager calendar logic
-import { getSession, getUserRecord, saveCalendarLocal } from "./db.js";
+// manager.js — manager calendar logic (cleaned & fixed)
+import { getSession, getUserRecord, saveCalendarLocal, getCalendarLocal } from "./db.js";
 import { getManagerSnapshot } from "./api.js";
 import { loadCalendarShell, renderCalendarMain, exportCalendar, mergeCalendars } from "./common.js";
 
 export async function initManagerCalendar(container) {
-  await loadCalendarShell(container);
+    console.log("[DEBUG] Initializing manager calendar...");
+    await loadCalendarShell(container);
 
-  const session = await getSession();
-  if (!session) return;
+    const session = await getSession();
+    if (!session) {
+        console.log("[DEBUG] No session found.");
+        return;
+    }
 
-  let managerRecord;
+    let managerRecord;
 
-  const tabs = container.querySelector("#calendarTabs");
-  if (!tabs) return;
-  tabs.hidden = false;
+    const tabs = container.querySelector("#calendarTabs");
+    if (!tabs) return;
+    tabs.hidden = false;
 
-  const actionsFooter = container.querySelector("#calendarActions");
-  if (!actionsFooter) return;
-  actionsFooter.hidden = false;
+    const actionsFooter = container.querySelector("#calendarActions");
+    if (!actionsFooter) return;
+    actionsFooter.hidden = false;
 
-  // ---------- attach button logic ----------
-  function setupManagerUI() {
-    const saveBtn = container.querySelector("#saveChanges");
-    const refreshBtn = container.querySelector("#refreshCalendarBtn");
-    const exportBtn = container.querySelector("#exportCalendarBtn");
+    const versionsContainer = container.querySelector("#calendarVersions");
+    if (!versionsContainer) {
+        console.error("[DEBUG] #calendarVersions not found in HTML!");
+        return;
+    }
+    console.log("[DEBUG] Using existing versionsContainer:", versionsContainer);
 
-    if (!saveBtn || !refreshBtn || !exportBtn) return;
+    // ---------- Setup manager UI buttons ----------
+    function setupManagerUI() {
+        console.log("[DEBUG] Setting up manager UI buttons...");
 
-    const localCalendar = managerRecord.calendar;
+        const saveBtn = container.querySelector("#saveChanges");
+        const refreshBtn = container.querySelector("#refreshCalendarBtn");
+        const exportBtn = container.querySelector("#exportCalendarBtn");
+        const createCopyBtn = versionsContainer.querySelector("#createCopyBtn");
 
-    saveBtn.addEventListener("click", () => {
-      alert("Guardar alterações (a implementar para manager)");
-    });
-
-    // Refresh currently visible calendar
-    refreshBtn.addEventListener("click", async () => {
-      try {
-        const currentTabBtn = tabs.querySelector("button.active");
-        const userIdToRender = currentTabBtn?.dataset.userId || session.userId;
-
-        // Fetch latest snapshot
-        const snapshot = await getManagerSnapshot();
-
-        // Merge manager's own calendar
-        const mergedManagerCalendar = mergeCalendars(managerRecord.calendar, snapshot.manager.calendar);
-
-        // Persist merged + overwrite managed users
-        const managedUsers = {};
-        for (const user of snapshot.users) {
-          managedUsers[user.userId] = user.calendar || {};
+        if (!saveBtn || !refreshBtn || !exportBtn || !createCopyBtn) {
+            console.warn("[DEBUG] Some action buttons not found!");
+            return;
         }
 
-        await saveCalendarLocal(session.userId, {
-          calendar: mergedManagerCalendar,
-          managedUsers
+        // Version switching buttons
+        const versionButtons = versionsContainer.querySelectorAll("button[data-version]");
+        versionButtons.forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const currentTab = tabs.querySelector("button.active");
+                const uid = currentTab?.dataset.userId;
+                console.log("[DEBUG] Switching version for user:", uid, "to:", btn.dataset.version);
+                if (!uid || uid === session.userId) return;
+                renderCalendarForTab(uid, btn.dataset.version);
+            });
         });
 
-        // Reload managerRecord from IndexedDB
+        // Create copy button
+        createCopyBtn.addEventListener("click", async () => {
+            const currentTab = tabs.querySelector("button.active");
+            const userId = currentTab?.dataset.userId;
+            if (!userId || userId === session.userId) return;
+
+            console.log("[DEBUG] Create copy clicked for user:", userId);
+            const original = managerRecord.managedUsers?.[userId] || {};
+            await saveCalendarLocal(`copy-${userId}`, { calendar: structuredClone(original) });
+
+            renderCalendarForTab(userId, "copy");
+        });
+
+        // Save button
+        saveBtn.addEventListener("click", async () => {
+            const currentTab = tabs.querySelector("button.active");
+            const userId = currentTab?.dataset.userId || session.userId;
+            console.log("[DEBUG] Save clicked for user:", userId);
+
+            if (userId !== session.userId) {
+                const copy = await getCalendarLocal(`copy-${userId}`);
+                if (copy) {
+                    await saveCalendarLocal(`copy-${userId}`, { calendar: copy });
+                    alert("Copy saved locally");
+                }
+            }
+        });
+
+        // Refresh button
+        refreshBtn.addEventListener("click", async () => {
+            const currentTab = tabs.querySelector("button.active");
+            const userId = currentTab?.dataset.userId || session.userId;
+            console.log("[DEBUG] Refresh clicked for user:", userId);
+
+            const snapshot = await getManagerSnapshot();
+            const mergedCalendar = mergeCalendars(managerRecord.calendar, snapshot.manager.calendar);
+
+            const managedUsers = {};
+            for (const u of snapshot.users) managedUsers[u.userId] = u.calendar || {};
+
+            await saveCalendarLocal(session.userId, { calendar: mergedCalendar, managedUsers });
+            managerRecord = await getUserRecord(session.userId);
+
+            renderTabs();
+            renderCalendarForTab(userId);
+        });
+
+        // Export button
+        exportBtn.addEventListener("click", async () => {
+            const currentTab = tabs.querySelector("button.active");
+            const userId = currentTab?.dataset.userId || session.userId;
+            console.log("[DEBUG] Export clicked for user:", userId);
+
+            const copy = await getCalendarLocal(`copy-${userId}`);
+            const calendarToExport = copy || (userId === session.userId ? managerRecord.calendar : managerRecord.managedUsers?.[userId] || {});
+            exportCalendar(container, userId, calendarToExport);
+        });
+    }
+
+    // ---------- Load manager record ----------
+    async function loadFromIndexedDB() {
+        console.log("[DEBUG] Loading manager record from IndexedDB...");
         managerRecord = await getUserRecord(session.userId);
-
-        // Re-render all tabs (so any new managed users appear)
         renderTabs();
-
-        // Render currently selected tab
-        const calendarToRender =
-          userIdToRender === session.userId
-            ? managerRecord.calendar
-            : managerRecord.managedUsers?.[userIdToRender] || {};
-
-        renderCalendarMain(container, userIdToRender, calendarToRender, { showExport: true });
-      } catch (err) {
-        alert("Erro ao atualizar calendário.");
-        console.error("[MANAGER] Failed to refresh calendar:", err);
-      }
-    });
-
-    exportBtn.addEventListener("click", () => {
-      exportCalendar(container, session.userId, localCalendar);
-    });
-  }
-
-  // ---------- load from IndexedDB ----------
-  async function loadFromIndexedDB() {
-    managerRecord = await getUserRecord(session.userId);
-    renderTabs();
-
-    // Default render: manager's own calendar
-    renderCalendarMain(container, session.userId, managerRecord.calendar, { showExport: true });
-
-    setupManagerUI();
-  }
-
-  // ---------- render tabs ----------
-  function renderTabs() {
-    if (!managerRecord) return;
-
-    tabs.innerHTML = "";
-
-    // Manager tab first
-    const managerBtn = document.createElement("button");
-    managerBtn.type = "button";
-    managerBtn.textContent = session.userId;
-    managerBtn.dataset.userId = session.userId;
-    managerBtn.classList.add("active"); // default selected
-    tabs.appendChild(managerBtn);
-
-    // Managed users
-    if (managerRecord.managedUsers) {
-      for (const [uid] of Object.entries(managerRecord.managedUsers)) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.textContent = uid;
-        btn.dataset.userId = uid;
-        tabs.appendChild(btn);
-      }
+        renderCalendarForTab(session.userId);
+        setupManagerUI();
     }
 
-    // Attach click listener
-    tabs.querySelectorAll("button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        tabs.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
-        btn.classList.add("active");
+    // ---------- Render user tabs ----------
+    function renderTabs() {
+        tabs.innerHTML = "";
 
-        const uid = btn.dataset.userId;
-        const cal = uid === session.userId
-          ? managerRecord.calendar
-          : managerRecord.managedUsers?.[uid] || {};
+        // Manager tab
+        const mgrBtn = document.createElement("button");
+        mgrBtn.type = "button";
+        mgrBtn.textContent = session.userId;
+        mgrBtn.dataset.userId = session.userId;
+        mgrBtn.classList.add("active");
+        tabs.appendChild(mgrBtn);
 
-        renderCalendarMain(container, uid, cal, { showExport: true });
-      });
-    });
-  }
+        // Managed user tabs
+        if (managerRecord.managedUsers) {
+            for (const uid of Object.keys(managerRecord.managedUsers)) {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.textContent = uid;
+                btn.dataset.userId = uid;
+                tabs.appendChild(btn);
+            }
+        }
 
-  // ---------- refresh users snapshot button ----------
-  const refreshUsersBtn = document.createElement("button");
-  refreshUsersBtn.textContent = "🔄";
-  refreshUsersBtn.title = "Atualizar utilizadores";
-  refreshUsersBtn.addEventListener("click", async () => {
-    try {
-      const snapshot = await getManagerSnapshot();
-      const mergedManagerCalendar = mergeCalendars(managerRecord.calendar, snapshot.manager.calendar);
-
-      const managedUsers = {};
-      for (const user of snapshot.users) {
-        managedUsers[user.userId] = user.calendar || {};
-      }
-
-      await saveCalendarLocal(session.userId, {
-        calendar: mergedManagerCalendar,
-        managedUsers
-      });
-
-      await loadFromIndexedDB();
-    } catch (err) {
-      alert("Erro ao atualizar snapshot online.");
+        tabs.querySelectorAll("button").forEach(btn => {
+            btn.addEventListener("click", () => {
+                tabs.querySelectorAll("button").forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                console.log("[DEBUG] Tab selected:", btn.dataset.userId);
+                renderCalendarForTab(btn.dataset.userId);
+            });
+        });
     }
-  });
-  tabs.appendChild(refreshUsersBtn);
 
-  // Initial load
-  await loadFromIndexedDB();
+    // ---------- Render calendar for a tab ----------
+    async function renderCalendarForTab(userId, version = "original") {
+        console.log("[DEBUG] Rendering calendar for:", userId, "version:", version);
+
+        let calendar;
+        if (userId === session.userId) {
+            versionsContainer.hidden = true;
+            calendar = managerRecord.calendar;
+        } else {
+            versionsContainer.hidden = false;
+            calendar = version === "copy"
+                ? (await getCalendarLocal(`copy-${userId}`))?.calendar || {}
+                : managerRecord.managedUsers[userId] || {};
+        }
+
+        // Editable: manager own or managed copies
+        const isEditable = (userId === session.userId) || (version === "copy");
+
+        renderCalendarMain(container, userId, calendar, { editable: isEditable });
+
+        // Highlight version buttons
+        versionsContainer.querySelectorAll("button[data-version]").forEach(b => b.classList.remove("active"));
+        const versionBtn = versionsContainer.querySelector(`[data-version="${version}"]`);
+        if (versionBtn) versionBtn.classList.add("active");
+
+        console.log("[DEBUG] Versions container visible:", !versionsContainer.hidden);
+    }
+
+    // ---------- Refresh all users snapshot button ----------
+    const refreshUsersBtn = document.createElement("button");
+    refreshUsersBtn.textContent = "🔄";
+    refreshUsersBtn.title = "Atualizar utilizadores";
+    refreshUsersBtn.addEventListener("click", async () => {
+        console.log("[DEBUG] Refresh users snapshot clicked");
+        const snapshot = await getManagerSnapshot();
+        const mergedCalendar = mergeCalendars(managerRecord.calendar, snapshot.manager.calendar);
+
+        const managedUsers = {};
+        for (const u of snapshot.users) managedUsers[u.userId] = u.calendar || {};
+
+        await saveCalendarLocal(session.userId, { calendar: mergedCalendar, managedUsers });
+        await loadFromIndexedDB();
+    });
+    tabs.appendChild(refreshUsersBtn);
+
+    // ---------- Initial load ----------
+    await loadFromIndexedDB();
+    console.log("[DEBUG] Manager calendar initialization complete.");
 }

@@ -12,7 +12,13 @@
 
   <!-- Main calendar area -->
   <main id="calendarMain" class="calendar-main">
-    <!-- calendar grid will live here later -->
+    <!-- Manager only -->
+    <div id="calendarVersions" class="calendar-versions" hidden>
+      <button data-version="original" class="active">Original</button>
+      <button data-version="copy">Copy</button>
+      <button id="createCopyBtn">Create Copy</button>
+    </div>
+     <div id="calendarGrid"></div>
   </main>
 
   <!-- Actions shared by both user and manager -->

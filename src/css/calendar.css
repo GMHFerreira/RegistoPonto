@@ -1,0 +1,182 @@
+/* -----------------------------
+   Container for horizontal scroll
+----------------------------- */
+.calendar-grid {
+    overflow-x: auto;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+/* -----------------------------
+   Base table styling
+----------------------------- */
+.calendar-table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 600px; /* optional minimum width */
+    table-layout: auto; /* let columns adapt to content */
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* -----------------------------
+   Table header
+----------------------------- */
+.calendar-table thead th {
+    background-color: #f0f0f0;
+    color: #333;
+    text-align: center;
+    border-bottom: 2px solid #ccc;
+    white-space: nowrap;        /* keep content in one line */
+    overflow: hidden;           /* hide overflow */
+    text-overflow: ellipsis;    /* show … if too long */
+    vertical-align: middle;
+
+    /* sticky headers */
+    position: sticky;
+    top: 0;
+    z-index: 3;
+
+    /* default padding for headers WITHOUT menu button */
+    padding: 8px 8px 8px 8px;   /* all sides equal */
+    min-width: 60px;
+}
+
+.calendar-table thead th:has(button) {
+    padding-right: 36px;        /* extra space for the menu button */
+    padding-left: 8px;          /* keep left padding consistent */
+}
+
+/* First column sticky (dates) */
+.calendar-table th:first-child,
+.calendar-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: #fafafa;
+    border-right: 1px solid #ccc;
+}
+
+/* Separator between custom columns and fixed columns */
+.calendar-table th.custom-separator {
+    border-right: 2px solid #888;
+}
+
+/* Column menu button in header */
+.calendar-table thead th button {
+    position: absolute;          /* detach from text flow */
+    right: 10px;                  /* align right inside header */
+    top: 50%;                    /* center vertically */
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    cursor: pointer;
+
+    /* subtle background */
+    background-color: #e0e0e0;   /* light grey, not too flashy */
+    color: #333;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 6px;
+
+    z-index: 1000;               /* very high to override sticky cells */
+}
+
+.calendar-table thead th button:hover {
+    background-color: #a3a3a3;   /* darker on hover */
+    transform: translateY(-50%) scale(1.05); /* subtle zoom */
+}
+
+/* -----------------------------
+   Table body cells
+----------------------------- */
+.calendar-table tbody td {
+    padding: 6px 10px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle; /* ensures content is centered vertically */
+}
+
+/* Numeric inputs inside table */
+.calendar-table tbody td input[type="number"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px 4px; /* reduced horizontal padding for narrow columns */
+    font-size: 1rem;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.calendar-table tbody td input[type="number"]::-webkit-inner-spin-button,
+.calendar-table tbody td input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none; /* Chrome, Safari, Edge */
+    margin: 0;
+}
+
+.calendar-table tbody td input[type="number"]:focus {
+    border-color: #0078d4;
+    background-color: #f0f8ff;
+    outline: none;
+}
+
+/* -----------------------------
+   Totals column & row
+----------------------------- */
+.calendar-table tbody td.total-column,
+.calendar-table tfoot td {
+    font-weight: bold;
+    background-color: #e8f0fe;
+    vertical-align: middle;
+    text-align: center;
+    padding: 10px 8px; /* taller row height */
+    line-height: 1.4;
+}
+
+/* Totals row (tfoot) */
+.calendar-table tfoot {
+    background-color: #dbe9fd;
+}
+
+/* -----------------------------
+   Weekend highlighting
+----------------------------- */
+/* Entire weekend row */
+.calendar-table tbody tr.weekend-row td {
+    background-color: rgba(255, 235, 200, 0.37); /* subtle light orange */
+}
+
+/* Highlight current day */
+.calendar-table tbody td.today {
+    border: 2px solid #0078d4;
+    border-radius: 4px;
+}
+
+/* -----------------------------
+   Column separator after last custom column
+----------------------------- */
+.custom-separator-td {
+    border-right: 2px solid #aaa; /* adjust thickness/color as needed */
+}
+
+/* -----------------------------
+   Column menu dropdown
+----------------------------- */
+.column-menu {
+    background-color: #fff;         /* visible but clean */
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    border-radius: 4px;
+    min-width: 120px;
+    z-index: 10000;                 /* ensure it floats above everything */
+}
+
+.column-menu div {
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.column-menu div:hover {
+    background-color: #f0f0f0;
+}

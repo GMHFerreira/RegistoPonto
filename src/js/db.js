@@ -9,6 +9,9 @@ const RATE_LIMIT_PREFIX = "rateLimit:";
 
 let dbPromise;
 
+// -----------------------------
+// IndexedDB initialization
+// -----------------------------
 function initDB() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
@@ -29,244 +32,275 @@ function initDB() {
   return dbPromise;
 }
 
-/**
- * Save a login session
- */
-export async function saveSession(token, userId, role, setActive = true) {
-  const db = await initDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  const store = tx.objectStore(STORE_NAME);
-
-  // Fetch existing record
-  const req = store.get(userId);
-  const record = await new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result || {});
-    req.onerror = () => reject(req.error);
-  });
-
-  // Merge new session info without deleting existing rate limits or calendar
-  const newRecord = {
-    ...record,
-    userId,
-    token,
-    role
-  };
-
-  store.put(newRecord);
-  await tx.complete;
-
-  if (setActive) localStorage.setItem("activeUserId", userId);
-}
-
-/**
- * Get the currently active session
- */
-export async function getSession() {
-  const activeUserId = localStorage.getItem("activeUserId");
-  if (!activeUserId) return null;
-
+// -----------------------------
+// IndexedDB helpers (DRY)
+// -----------------------------
+async function idbGet(key) {
   const db = await initDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readonly");
     const store = tx.objectStore(STORE_NAME);
-    const request = store.get(activeUserId);
-
+    const request = store.get(key);
     request.onsuccess = () => resolve(request.result || null);
     request.onerror = () => reject(request.error);
   });
 }
 
-/**
- * Switch to a different saved session
- */
-export async function switchSession(userId) {
+async function idbPut(record) {
   const db = await initDB();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
+    const tx = db.transaction(STORE_NAME, "readwrite");
     const store = tx.objectStore(STORE_NAME);
-    const request = store.get(userId);
-
-    request.onsuccess = () => {
-      if (request.result) {
-        localStorage.setItem("activeUserId", userId);
-      }
-      resolve(request.result || null);
-    };
-
+    const request = store.put(record);
+    request.onsuccess = resolve;
     request.onerror = () => reject(request.error);
   });
 }
 
-/**
- * Logout current user (only removes active pointer)
- */
+// -----------------------------
+// Full refresh: session + calendar
+// -----------------------------
+export async function refreshUserData(fetchedUser) {
+  // fetchedUser = { userId, token, role, managedUsers, calendar }
+  const { userId, token, role, managedUsers = [], calendar: fetchedCalendar } = fetchedUser;
+
+  // Load existing record or create template
+  let record = await idbGet(userId);
+  if (!record) {
+    record = {
+      userId,
+      calendar: { columns: [], cells: [], dateRange: null },
+      managedUsers: {}
+    };
+  }
+
+  // --- Session / auth info ---
+  record.token = token;
+  record.role = role;
+
+  // --- Manager-specific: sync managedUsers list ---
+  if (role === "manager") {
+    record.managedUsers ??= {};
+
+    // Add new managed users
+    for (const managedUserId of managedUsers) {
+      record.managedUsers[managedUserId] ??= {
+        original: null,
+        copies: {}
+      };
+    }
+
+    // Remove deleted managed users
+    for (const existingId of Object.keys(record.managedUsers)) {
+      if (!managedUsers.includes(existingId)) {
+        delete record.managedUsers[existingId];
+      }
+    }
+  }
+
+  // --- Merge fetched calendar ---
+  if (fetchedCalendar) {
+    const local = record.calendar;
+
+    // Columns: combine unique columns
+    local.columns = Array.from(new Set([...local.columns, ...(fetchedCalendar.columns || [])]));
+
+    // Cells: local edits take priority
+    const localCellMap = new Map(local.cells.map(c => `${c.date}|${c.column}`));
+    const mergedCells = [...local.cells];
+
+    (fetchedCalendar.cells || []).forEach(c => {
+      const key = `${c.date}|${c.column}`;
+      if (!localCellMap.has(key)) {
+        mergedCells.push(c);
+      }
+    });
+
+    local.cells = mergedCells;
+
+    // Date range: prefer local if it exists
+    local.dateRange = local.dateRange || fetchedCalendar.dateRange || null;
+  }
+
+  // Persist everything
+  await idbPut(record);
+  localStorage.setItem("activeUserId", userId);
+
+  return record; // return full up-to-date record
+}
+
+export async function getSession() {
+  const activeUserId = localStorage.getItem("activeUserId");
+  if (!activeUserId) return null;
+  return idbGet(activeUserId);
+}
+
 export function logout() {
   localStorage.removeItem("activeUserId");
 }
 
-/**
- * List all stored sessions
- */
-export async function listSessions() {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.getAll();
-
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-/* ------------------------------------------------------------------
-   Rate limiting (persistent, per user, per action)
------------------------------------------------------------------- */
-
-/**
- * Check whether an action is allowed under a cooldown
- * @param {string} actionKey
- * @param {number} cooldownMs
- */
+// -----------------------------
+// Rate Limiting
+// -----------------------------
 export async function checkRateLimit(actionKey, cooldownMs) {
-  if (!navigator.onLine) {
-    return { allowed: false, reason: "offline", remainingMs: Infinity };
-  }
-
+  if (!navigator.onLine) return { allowed: false, reason: "offline", remainingMs: Infinity };
   const session = await getSession();
-  if (!session) {
-    return { allowed: false, reason: "offline", remainingMs: Infinity };
+  const record = (await idbGet(session.userId)) || {};
+  const lastTs = record[RATE_LIMIT_PREFIX + actionKey] || 0;
+  const elapsed = Date.now() - lastTs;
+
+  if (elapsed >= cooldownMs) {
+    return { allowed: true };
+  } else {
+    return { allowed: false, reason: "cooldown", remainingMs: cooldownMs - elapsed };
   }
-
-  const db = await initDB();
-
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const request = store.get(session.userId);
-
-    request.onsuccess = () => {
-      const record = request.result || {};
-
-      const key = RATE_LIMIT_PREFIX + actionKey;
-      const lastTs = record[key] || 0;
-
-      const elapsed = Date.now() - lastTs;
-
-      if (elapsed >= cooldownMs) {
-        resolve({ allowed: true });
-      } else {
-        resolve({
-          allowed: false,
-          reason: "cooldown",
-          remainingMs: cooldownMs - elapsed
-        });
-      }
-    };
-
-    request.onerror = (err) => {
-      console.error("[RateLimit] DB read error", err);
-      reject(err);
-    };
-  });
 }
 
 export async function commitRateLimit(actionKey) {
   const session = await getSession();
-  if (!session) {
-    return;
+  const record = (await idbGet(session.userId)) || { userId: session.userId };
+  record[RATE_LIMIT_PREFIX + actionKey] = Date.now();
+  await idbPut(record);
+}
+
+// -----------------------------
+// Owner's calendar
+// -----------------------------
+export async function getOwnCalendar(userId) {
+  const record = await idbGet(userId);
+  return record.calendar;
+}
+
+async function updateOwnCalendar(userId, mutator) {
+  const record = await idbGet(userId);
+  mutator(record.calendar);
+  await idbPut(record);
+  return record.calendar;
+}
+
+export async function updateOwnCalendarCell(userId, date, column, value) {
+  return updateOwnCalendar(userId, (calendar) => {
+    const existing = calendar.cells.find(
+      c => c.date === date && c.column === column
+    );
+
+    if (existing) {
+      if (value === null || value === "") {
+        calendar.cells.splice(calendar.cells.indexOf(existing), 1);
+      } else {
+        existing.value = value;
+      }
+    } else if (value !== null && value !== "") {
+      calendar.cells.push({ date, column, value });
+    }
+  });
+}
+
+export async function saveOwnCalendarColumns(userId, customColumns) {
+  return updateOwnCalendar(userId, (calendar) => {
+    calendar.columns = customColumns;
+  });
+}
+
+export async function saveOwnCalendarDateRange(userId, startDate, endDate) {
+  return updateOwnCalendar(userId, (calendar) => {
+    calendar.dateRange = { startDate, endDate };
+  });
+}
+
+// -----------------------------
+// Managed user calendars
+// -----------------------------
+export async function saveManagedOriginalCalendar(managerId, managedUserId, calendar) {
+  const record = await idbGet(managerId);
+
+  // Overwrite the original calendar
+  record.managedUsers[managedUserId].original = calendar;
+
+  await idbPut(record);
+
+  return record.managedUsers[managedUserId].original;
+}
+
+export async function createManagedCopy(managerId, managedUserId, copyName, startDate, endDate) {
+  const record = await idbGet(managerId);
+
+  // Check for existing copy
+  if (record.managedUsers[managedUserId].copies[copyName]) {
+    alert(`A copy named "${copyName}" already exists for this managed user`);
+    return null;
   }
 
-  const db = await initDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  const store = tx.objectStore(STORE_NAME);
+  const original = record.managedUsers[managedUserId].original;
+  const filteredCells = original.cells.filter(c => c.date >= startDate && c.date <= endDate);
 
-  const req = store.get(session.userId);
-  const record = await new Promise((resolve, reject) => {
-    req.onsuccess = () => {
-      resolve(req.result || { userId: session.userId });
-    };
-    req.onerror = () => reject(req.error);
-  });
+  // Create the copy
+  record.managedUsers[managedUserId].copies[copyName] = {
+    columns: [...original.columns],
+    cells: filteredCells,
+    dateRange: { startDate, endDate }
+  };
 
-  record[RATE_LIMIT_PREFIX + actionKey] = Date.now();
-
-  await new Promise((resolve, reject) => {
-    const putReq = store.put(record);
-    putReq.onsuccess = () => {
-      resolve();
-    };
-    putReq.onerror = (err) => {
-      console.error(`[RateLimit] commitRateLimit: error saving record`, err);
-      reject(err);
-    };
-  });
+  await idbPut(record);
+  return record.managedUsers[managedUserId].copies[copyName];
 }
 
-
-/**
- * Save calendar locally (persistent)
- */
-export async function saveCalendarLocal(userId, calendarData) {
-  const db = await initDB();
-  const tx = db.transaction(STORE_NAME, "readwrite");
-  const store = tx.objectStore(STORE_NAME);
-
-  // Get full record first
-  const record = await new Promise((resolve, reject) => {
-    const req = store.get(userId);
-    req.onsuccess = () => resolve(req.result || { userId });
-    req.onerror = () => reject(req.error);
-  });
-
-  // Update calendar or managedUsers if provided
-  if (calendarData.calendar) record.calendar = calendarData.calendar;
-  if (calendarData.managedUsers) record.managedUsers = calendarData.managedUsers;
-
-  // Save the updated record
-  await new Promise((resolve, reject) => {
-    const putReq = store.put(record);
-    putReq.onsuccess = resolve;
-    putReq.onerror = reject;
-  });
+export async function getManagedCalendar(managerId, managedUserId, copyName) {
+  const record = await idbGet(managerId);
+  return record.managedUsers[managedUserId].copies[copyName];
 }
 
-/**
- * Load calendar from IndexedDB
- * If userId === managerId, returns manager's own calendar
- * If userId is a managed user, returns that user's calendar
- */
-export async function getCalendarLocal(userId, managerId = null) {
-  const db = await initDB();
+export async function updateManagedCalendarCell(managerId, managedUserId, copyName, date, column, value) {
+  const record = await idbGet(managerId);
+  const managedCopy = record.managedUsers[managedUserId].copies[copyName];
 
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
+  const existing = managedCopy.cells.find(c => c.date === date && c.column === column);
 
-    const request = store.get(managerId || userId);
+  if (existing) {
+    if (value === null || value === "") {
+      const idx = managedCopy.cells.indexOf(existing);
+      managedCopy.cells.splice(idx, 1);
+    } else {
+      existing.value = value;
+    }
+  } else if (value !== null && value !== "") {
+    managedCopy.cells.push({ date, column, value });
+  }
 
-    request.onsuccess = () => {
-      const record = request.result || {};
-      // If managerId is provided, fetch from managedUsers
-      if (managerId && record.managedUsers && record.managedUsers[userId]) {
-        resolve(record.managedUsers[userId]);
-      } else {
-        resolve(record.calendar || {});
-      }
-    };
-
-    request.onerror = () => reject(request.error);
-  });
+  await idbPut(record);
 }
 
-export async function getUserRecord(userId) {
-  const db = await initDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readonly");
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.get(userId);
+// -----------------------------
+// Managed user calendar columns
+// -----------------------------
 
-    req.onsuccess = () => resolve(req.result || { userId });
-    req.onerror = () => reject(req.error);
-  });
+export async function addManagedCopyColumn(managerId, managedUserId, copyName, columnName) {
+  const record = await idbGet(managerId);
+  const managedCopy = record.managedUsers[managedUserId].copies[copyName];
+
+  if (!managedCopy.columns.includes(columnName)) {
+    managedCopy.columns.push(columnName);
+  }
+
+  await idbPut(record);
+  return managedCopy.columns;
+}
+
+export async function removeManagedCopyColumn(managerId, managedUserId, copyName, columnName) {
+  const record = await idbGet(managerId);
+  const managedCopy = record.managedUsers[managedUserId].copies[copyName];
+
+  const idx = managedCopy.columns.indexOf(columnName);
+   managedCopy.columns.splice(idx, 1);
+
+  await idbPut(record);
+  return managedCopy.columns;
+}
+
+export async function deleteManagedCopy(managerId, managedUserId, copyName) {
+  const record = await idbGet(managerId);
+  const managedUser = record.managedUsers[managedUserId];
+
+  delete managedUser.copies[copyName];
+  await idbPut(record);
 }

@@ -23,8 +23,8 @@ export async function renderLoginView(container) {
         const { initManagerCalendar } = await import('./manager.js');
         await initManagerCalendar(container);
       } else {
-        const { initUserCalendar } = await import('./user.js');
-        await initUserCalendar(container);
+        const { initOwnCalendar } = await import('./ownCalendar.js');
+        await initOwnCalendar(container);
       }
 
     } catch (err) {

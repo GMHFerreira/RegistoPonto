@@ -6,13 +6,17 @@
   <title>Registo do Ponto</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1f2937" />
-  <link rel="icon" href="data:,">
-  <!-- Updated path to CSS inside src/css/ -->
+  <link rel="icon" href="data:," />
+
+  <!-- CSS -->
   <link rel="stylesheet" href="src/css/styles.css" />
   <link rel="stylesheet" href="src/css/login.css" />
+  <link rel="stylesheet" href="src/css/calendar.css" />
 </head>
 <body>
-  <!-- App Header -->
+  <!-- -----------------------------
+       App Header (Global UI)
+  ----------------------------- -->
   <header class="app-header">
     <img src="assets/logo.png" alt="Registo do Ponto Logo" class="logo">
 
@@ -23,18 +27,21 @@
       <button id="installButton" title="Clique para instalar a aplicação" hidden aria-label="Instalar App">
         Instalar App
       </button>
-      <button id="logoutBtn" title="Terminar sessão" hidden aria-label="Logout">
+      <button id="logoutBtn" title="Terminar sessão" aria-label="Logout">
         Logout
       </button>
     </div>
   </header>
 
-  <!-- Dynamic main content -->
-  <main id="appMain">
-    <!-- JS will inject Auth / User / Manager views here -->
-  </main>
+  <!-- -----------------------------
+       Dynamic Main Content
+       Views will be injected here
+  ----------------------------- -->
+  <main id="appMain"></main>
 
-  <!-- QR Code Modal -->
+  <!-- -----------------------------
+       QR Code Modal (Global)
+  ----------------------------- -->
   <div id="qrModal" class="modal hidden">
     <div class="modal-content">
       <h2>Instalar aplicação</h2>

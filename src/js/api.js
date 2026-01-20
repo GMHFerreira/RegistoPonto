@@ -1,4 +1,4 @@
-import { saveSession, getSession } from './db.js';
+import { getOwnCalendar, getSession, refreshUserData, saveManagedOriginalCalendar  } from './db.js';
 
 const API_BASE = "https://registo-ponto-api.hferreira-628.workers.dev";
 
@@ -30,12 +30,15 @@ export async function apiLogin(id, password) {
     body: JSON.stringify({ id, password })
   });
 
-  const data = await handleResponse(res);
+  const fullUser = await handleResponse(res);
 
-  // Save token persistently using db.js
-  saveSession(data.token, id, data.role);
+  const mergedRecord = await refreshUserData({
+    ...fullUser,
+    userId: id,
+    token: fullUser.password
+  });
 
-  return data; // { token, role }
+  return mergedRecord;
 }
 
 // -----------------------------
@@ -44,66 +47,46 @@ export async function apiLogin(id, password) {
 export async function apiGetUser(userId) {
   const headers = await authHeaders(userId);
   const res = await fetch(`${API_BASE}/user/${userId}`, { headers });
-  return handleResponse(res); // returns full user record: { password, role, manager, calendar, managerCopy }
+  const fullUser = await handleResponse(res);
+
+  const mergedRecord = await refreshUserData({
+    ...fullUser,
+    userId,
+    token: fullUser.password
+  });
+
+  return mergedRecord;
 }
 
-export async function saveCalendar(userId, calendar) {
+export async function saveCalendar(userId) {
+  const calendar = await getOwnCalendar(userId);
   const headers = await authHeaders(userId);
+
   const res = await fetch(`${API_BASE}/calendar`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers
-    },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify({ userId, calendar })
   });
 
-  if (!res.ok) {
-    const msg = await res.text();
-    throw new Error(msg);
-  }
+  return handleResponse(res); // throws on error, otherwise returns "Calendar saved"
 }
 
 // -----------------------------
-// Fetch full manager snapshot (manager + all managed users and their calendars)
+// Fetch a managed user's original calendar
 // -----------------------------
-export async function getManagerSnapshot() {
-  const headers = await authHeaders(); // uses current logged-in manager session
-  const res = await fetch(`${API_BASE}/manager/snapshot`, { headers });
-  const data = await handleResponse(res);
+export async function apiGetManagedOriginal(managerId, managedUserId) {
+  const headers = await authHeaders(managerId);
 
-  // data is typed as { manager: { userId, calendar }, users: [{ userId, name, calendar }] }
-  return data;
-}
+  // GET /user/{managedUserId} from backend
+  const res = await fetch(`${API_BASE}/user/${managedUserId}`, { headers });
+  const fetchedUser = await handleResponse(res);
 
-// -----------------------------
-// Remove getManagedUsers: replaced by getManagerSnapshot
-// -----------------------------
-export async function getManagedUsers() {
-  const snapshot = await getManagerSnapshot();
-  return snapshot.users.sort((a, b) =>
-    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  // Save the calendar as the 'original' in IndexedDB
+  const savedOriginal = await saveManagedOriginalCalendar(
+    managerId,
+    managedUserId,
+    fetchedUser.calendar
   );
-}
 
-// -----------------------------
-// Optional session check
-// -----------------------------
-export async function checkSession() {
-  return getSession(); // return the saved persistent session
-}
-
-// -----------------------------
-// Optional helper: export a snapshot as JSON
-// -----------------------------
-export function exportSnapshotJSON(snapshot) {
-  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `manager_snapshot_${new Date().toISOString()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  return savedOriginal; // returns the original calendar for local use
 }

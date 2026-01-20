@@ -1,0 +1,32 @@
+<div id="calendarPage" class="calendar-page">
+
+  <!-- Calendar header: user name + date range -->
+  <header id="calendarHeader" class="calendar-header">
+    <div id="calendarDateRange" class="calendar-date-range">
+      <label for="startDate">De:</label>
+      <input type="date" id="startDate" />
+      <label for="endDate">Até:</label>
+      <input type="date" id="endDate" />
+      <button id="applyDateRange">Aplicar</button>
+    </div>
+  </header>
+
+  <!-- Main calendar grid -->
+  <main id="calendarMain" class="calendar-main">
+    <div id="calendarGrid" class="calendar-grid"></div>
+  </main>
+
+  <!-- Footer actions: save, refresh, export -->
+  <footer id="calendarActions" class="calendar-actions">
+    <button type="button" id="saveChanges" title="Guardar alterações">
+      💾 Guardar
+    </button>
+    <button type="button" id="refreshCalendarBtn" title="Atualizar calendário">
+      🔄 Atualizar
+    </button>
+    <button type="button" id="exportCalendarBtn" title="Exportar calendário">
+      📤 Exportar
+    </button>
+  </footer>
+
+</div>
