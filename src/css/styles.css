@@ -1,13 +1,13 @@
-/* ----------------------------- */
-/* Global box sizing */
-/* ----------------------------- */
+/* -----------------------------
+   Global box sizing
+----------------------------- */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
-/* ----------------------------- */
-/* Body */
-/* ----------------------------- */
+/* -----------------------------
+   Body
+----------------------------- */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -15,87 +15,101 @@ body {
   background-color: #ffffff;
 }
 
-/* ----------------------------- */
-/* Header */
-/* ----------------------------- */
+/* -----------------------------
+   Header
+----------------------------- */
 .app-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
   gap: 1rem;
+  padding: 1rem;
   background-color: #f0f0f0;
 }
 
 .logo {
   height: 40px;
   flex-shrink: 0;
+  flex-grow: 0;
+  width: auto;
+  max-width: 100%;
 }
 
-/* ----------------------------- */
-/* Header controls */
-/* ----------------------------- */
+/* -----------------------------
+   Header Controls - Single Row
+----------------------------- */
 .header-controls {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center; /* vertically align buttons with inputs */
-  gap: 1rem;
+  flex-wrap: nowrap;           /* NEVER wrap */
+  gap: 0.5rem;
+  justify-content: flex-start; /* align left */
+  align-items: center;
+  overflow-x: auto;            /* scroll if very narrow */
+  min-width: 0;
 }
 
-/* Label + input stacked, controlled width */
-.header-controls label {
-  display: flex;
-  flex-direction: column;
-  font-size: 0.875rem;
-  min-width: 120px;
-  max-width: 200px; /* prevents labels stretching too much */
-}
-
-/* Inputs fill the label width */
-.header-controls input,
-.header-controls select {
-  width: 100%;
-  padding: 0.5rem;
-  margin-top: 0.25rem;
-  font-size: 0.875rem;
-}
-
-/* Buttons */
 .header-controls button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  height: 38px;
-  padding: 0 0.75rem;
+  height: 36px;
+  padding: 0 12px;
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: 4px;
+  border: none;
   cursor: pointer;
-  flex: 0 0 auto;
-  transition: background-color 0.2s ease;
-}
-
-/* QR button */
-#qrButton {
+  white-space: nowrap;        /* prevent text wrapping inside button */
+  flex: 0 0 auto;             /* natural width on desktop */
   background-color: #2563eb;
   color: white;
-  border: none;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
+
+.header-controls button:hover {
+  background-color: #1d4ed8;
+}
+
+.header-controls button:active {
+  transform: scale(0.97);
+}
+
+/* Specific button colors */
+#qrButton { background-color: #2563eb; }
+#installButton { background-color: #10b981; }
+#logoutBtn { background-color: #f87171; }
+
 #qrButton:hover { background-color: #1d4ed8; }
-
-/* Install button */
-#installButton {
-  background-color: #10b981;
-  color: white;
-  border: none;
-}
 #installButton:hover { background-color: #059669; }
+#logoutBtn:hover { background-color: #dc2626; }
 
-/* ----------------------------- */
-/* Modal overlay */
-/* ----------------------------- */
+/* -----------------------------
+   Mobile / Narrow screens
+----------------------------- */
+@media (max-width: 800px) {  /* adjust breakpoint as needed */
+  .app-header {
+    flex-direction: column;   /* logo above buttons */
+    align-items: center;
+  }
+
+  .header-controls {
+    flex-wrap: nowrap;        /* still single row */
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .header-controls button {
+    flex: 1 1 auto;           /* stretch to fill available width */
+    font-size: 0.825rem;
+    padding: 0 10px;
+  }
+}
+
+/* -----------------------------
+   Modal overlay
+----------------------------- */
 .modal {
   position: fixed;
   inset: 0;
@@ -153,30 +167,7 @@ body {
   border-radius: 4px;
   cursor: pointer;
 }
-#closeQrButton:hover { background-color: #374151; }
 
-/* ----------------------------- */
-/* Responsive adjustments */
-/* ----------------------------- */
-@media (max-width: 600px) {
-  .app-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .header-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  /* Keep label + input compact on mobile */
-  .header-controls label {
-    max-width: 100%;
-  }
-
-  /* Let buttons fill the available width on mobile */
-  .header-controls button {
-    width: 100%;
-  }
+#closeQrButton:hover {
+  background-color: #374151;
 }

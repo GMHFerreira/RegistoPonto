@@ -1,35 +1,74 @@
 <!-- src/views/ownCalendar.html -->
 <section id="ownCalendarView" class="view calendar-page">
 
-  <!-- Calendar header: user name + date range -->
-  <header id="calendarHeader" class="calendar-header">
-    <div id="calendarDateRange" class="calendar-date-range">
-      <label for="startDate">De:</label>
-      <input type="date" id="startDate" />
-      <label for="endDate">Até:</label>
-      <input type="date" id="endDate" />
+  <!-- Main calendar grid + toolbar inside scrollable container -->
+  <main id="calendarMain" class="calendar-main">
+      <!-- Toolbar above table -->
+    <div class="calendar-toolbar">
+      <div id="calendarDateRange" class="calendar-date-range">
+        <label for="startDate">De:</label>
+        <input type="date" id="startDate" />
+        <label for="endDate">Até:</label>
+        <input type="date" id="endDate" />
+      </div>
       <button type="button" id="addColumnBtn" title="Adicionar nova coluna">
-        ➕ Adicionar Coluna
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Adicionar Coluna
       </button>
     </div>
-  </header>
 
-  <!-- Main calendar grid -->
-  <main id="calendarMain" class="calendar-main">
-    <div id="calendarGrid" class="calendar-grid"></div>
+
+    <!-- Scrollable table -->
+    <div id="calendarGrid" class="calendar-grid">
+      <table class="calendar-table">
+        <thead> ... </thead>
+        <tbody> ... </tbody>
+      </table>
+    </div>
   </main>
 
   <!-- Footer actions: save, refresh, export -->
-  <footer id="calendarActions" class="calendar-actions">
-    <button type="button" id="saveChanges" title="Guardar alterações">
-      💾 Guardar
-    </button>
-    <button type="button" id="refreshCalendarBtn" title="Atualizar calendário">
-      🔄 Atualizar
-    </button>
-    <button type="button" id="exportCalendarBtn" title="Exportar calendário">
-      📤 Exportar
-    </button>
-  </footer>
+<footer id="calendarActions" class="calendar-actions">
+
+
+  <button type="button" id="refreshCalendarBtn" title="Atualizar calendário">
+    <!-- Refresh icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" transform="translate(0,-2)">
+      <path d="M4.93 4.93a10 10 0 1 1-1.41 1.41L2 8"/> 
+      <polyline points="2 2 2 8 8 8"/>
+    </svg>
+    Atualizar
+  </button>
+
+  <button type="button" id="syncCalendarBtn" title="Sincronizar com servidor">
+  <!-- Clean Upload Icon, shifted slightly up -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" transform="translate(0,-3)">
+    <!-- Upward arrow -->
+    <line x1="12" y1="20" x2="12" y2="8"/>
+    <polyline points="8 12 12 8 16 12"/>
+    <!-- Base tray -->
+    <rect x="6" y="20" width="12" height="2" rx="1" ry="1"/>
+  </svg>
+  Sincronizar
+</button>
+
+  <button type="button" id="exportCalendarBtn" title="Exportar calendário">
+    <!-- Download / export icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" transform="translate(0,-1)">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    Exportar
+  </button>
+
+</footer>
+
 
 </section>

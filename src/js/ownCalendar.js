@@ -7,7 +7,7 @@ import {
   saveOwnCalendarColumns,
   updateOwnCalendarCell
 } from "./db.js";
-import { apiGetUser } from "./api.js";
+import { apiGetUser, saveCalendar } from "./api.js";
 
 /* ----------------- Constants ----------------- */
 
@@ -58,20 +58,20 @@ export async function initOwnCalendar(container) {
 function setupOwnCalendarUI(container, userId, calendar) {
   const startInput = container.querySelector("#startDate");
   const endInput = container.querySelector("#endDate");
-  const saveBtn = container.querySelector("#saveChanges");
   const refreshBtn = container.querySelector("#refreshCalendarBtn");
   const exportBtn = container.querySelector("#exportCalendarBtn");
-  const addColumnBtn = container.querySelector("#addColumnBtn"); // <-- NEW
+  const addColumnBtn = container.querySelector("#addColumnBtn");
+
+  const syncBtn = container.querySelector("#syncCalendarBtn");
+  syncBtn.onclick = async () => {
+    await syncOwnCalendar(userId);
+  };
+
 
   startInput.value = calendar.dateRange?.startDate || "";
   endInput.value = calendar.dateRange?.endDate || "";
 
   renderOwnCalendar(container, userId, calendar);
-
-  saveBtn.onclick = async () => {
-    await saveOwnCalendarDateRange(userId, startInput.value, endInput.value);
-    alert("Calendário guardado.");
-  };
 
   refreshBtn.onclick = async () => {
     const remote = (await apiGetUser(userId)).calendar;
@@ -210,11 +210,14 @@ function renderOwnCalendar(container, userId, calendar) {
     const d = new Date(day + "T00:00");
     if ([0, 6].includes(d.getDay())) tr.classList.add("weekend-row");
 
-    // First cell: date
-    const dateTd = document.createElement("td");
-    dateTd.textContent = formatDayShort(day);
-    if (day === new Date().toISOString().slice(0, 10)) dateTd.classList.add("today");
-    tr.appendChild(dateTd);
+// First cell: date
+const dateTd = document.createElement("td");
+dateTd.textContent = formatDayShort(day);
+
+const todayStr = new Date().toISOString().slice(0, 10);
+if (day === todayStr) tr.classList.add("today"); // highlight entire row
+
+tr.appendChild(dateTd);
 
     // Remaining columns
     columns.forEach((col, idx) => {
@@ -371,4 +374,24 @@ function exportCalendar(calendar) {
   a.href = URL.createObjectURL(blob);
   a.download = "calendar.json";
   a.click();
+}
+
+async function syncOwnCalendar(userId) {
+  const syncBtn = document.querySelector("#syncCalendarBtn");
+  if (!syncBtn) return;
+
+  syncBtn.disabled = true;
+  const originalText = syncBtn.textContent;
+  syncBtn.textContent = "Sincronizando...";
+
+  try {
+    await saveCalendar(userId);
+    alert("Calendário sincronizado com sucesso!");
+  } catch (err) {
+    console.error("Erro ao sincronizar calendário:", err);
+    alert("Erro ao sincronizar calendário: " + err.message);
+  } finally {
+    syncBtn.disabled = false;
+    syncBtn.textContent = originalText;
+  }
 }
