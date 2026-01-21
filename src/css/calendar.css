@@ -120,7 +120,13 @@
     z-index: 4;
     background-color: #fafafa;
     border-right: 1px solid #ccc;
+
+    /* Force the column to fit its content without wrapping */
+    white-space: nowrap;          /* prevent text from wrapping */
+    width: 1%;                    /* shrink to fit content */
+    min-width: max-content;       /* ensure width adapts to largest value */
 }
+
 
 /* Separator between custom columns and fixed columns */
 .calendar-table th.custom-separator {

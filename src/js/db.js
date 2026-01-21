@@ -106,7 +106,7 @@ export async function refreshUserData(fetchedUser) {
     local.columns = Array.from(new Set([...local.columns, ...(fetchedCalendar.columns || [])]));
 
     // Cells: local edits take priority
-    const localCellMap = new Map(local.cells.map(c => `${c.date}|${c.column}`));
+    const localCellMap = new Map(local.cells.map(c => [`${c.date}|${c.column}`, c.value]));
     const mergedCells = [...local.cells];
 
     (fetchedCalendar.cells || []).forEach(c => {
@@ -171,7 +171,7 @@ export async function getOwnCalendar(userId) {
   return record.calendar;
 }
 
-async function updateOwnCalendar(userId, mutator) {
+export async function updateOwnCalendar(userId, mutator) {
   const record = await idbGet(userId);
   mutator(record.calendar);
   await idbPut(record);
