@@ -6,6 +6,7 @@ import { getSession, logout } from './db.js';
 import { renderLoginView } from './login.js';
 
 const mainContainer = document.getElementById("appMain");
+const toggleBtn = document.getElementById("toggleManagerViewBtn");
 
 document.addEventListener('DOMContentLoaded', async () => {
   // -----------------------------
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const installButton = document.getElementById("installButton");
 
   window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault(); // prevent default mini-infobar
+    e.preventDefault();
     deferredPrompt = e;
   });
 
@@ -54,21 +55,48 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // -----------------------------
-  // Load initial view based on session
+  // Dynamic view loaders
   // -----------------------------
-  const session = await getSession();
-
-  if (!session) {
-    const { renderLoginView } = await import('./login.js');
-    renderLoginView(mainContainer);
-  } else if (session.role === 'manager') {
-    const { initManagerCalendar } = await import('./manager.js');
-    await initManagerCalendar(mainContainer);
-  } else {
+  async function loadOwnCalendar() {
     const { initOwnCalendar } = await import('./ownCalendar.js');
     await initOwnCalendar(mainContainer);
   }
 
+  async function loadManagerDashboard() {
+    const { initManagerDashboard } = await import('./managerDashboard.js');
+    await initManagerDashboard(mainContainer);
+  }
+
+  // -----------------------------
+  // Load initial view
+  // -----------------------------
+  const session = await getSession();
+
+  if (!session) {
+    renderLoginView(mainContainer);
+    toggleBtn?.classList.add('hidden'); // hide toggle if exists
+  } else {
+    // always show own calendar by default
+    await loadOwnCalendar();
+
+    if (session.role === 'manager' && toggleBtn) {
+      toggleBtn.classList.remove('hidden');
+      toggleBtn.textContent = "Painel de Gestão";
+
+      let showingOwn = true;
+
+      toggleBtn.addEventListener('click', async () => {
+        if (showingOwn) {
+          await loadManagerDashboard();
+          toggleBtn.textContent = "Meu Calendário";
+        } else {
+          await loadOwnCalendar();
+          toggleBtn.textContent = "Painel de Gestão";
+        }
+        showingOwn = !showingOwn;
+      });
+    }
+  }
 
   // -----------------------------
   // Global Logout Button
@@ -77,6 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   logoutBtn.addEventListener("click", () => {
     logout();
     switchView(renderLoginView);
+    toggleBtn?.classList.add('hidden'); // hide toggle after logout
   });
 });
 

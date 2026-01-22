@@ -171,3 +171,51 @@ body {
 #closeQrButton:hover {
   background-color: #374151;
 }
+
+/* -----------------------------
+   Logo + Manager Toggle Button Group
+----------------------------- */
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;         /* space between logo and button */
+}
+
+/* Manager toggle button styling */
+#toggleManagerViewBtn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  border: none;
+  background-color: #ec9a00;  /* yellow/gold for visibility */
+  color: white;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;      /* natural width */
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#toggleManagerViewBtn:hover {
+  background-color: #f59e0b;
+}
+
+#toggleManagerViewBtn:active {
+  transform: scale(0.97);
+}
+
+/* -----------------------------
+   Mobile / Narrow screens adjustment
+----------------------------- */
+@media (max-width: 800px) {
+  .logo-group {
+    flex-direction: column; /* logo above button */
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  #toggleManagerViewBtn {
+    width: 100%;           /* stretch under logo */
+    text-align: center;
+  }
+}

@@ -18,7 +18,11 @@
        App Header (Global UI)
   ----------------------------- -->
   <header class="app-header">
-    <img src="assets/logo.png" alt="Registo do Ponto Logo" class="logo">
+    <!-- Logo + Manager toggle button group -->
+    <div class="logo-group">
+      <img src="assets/logo.png" alt="Registo do Ponto Logo" class="logo">
+      <button id="toggleManagerViewBtn" class="hidden">Gestão Colaboradores</button>
+    </div>
 
     <div class="header-controls">
       <button id="qrButton" title="Abrir QR Code">QR Code</button>

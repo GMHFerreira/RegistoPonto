@@ -331,7 +331,6 @@ function toggleColumnMenu(button, th, idx, columns, userId, container, calendar)
   const actions = [
     ["Mover esquerda", () => idx > 0 && swap(columns, idx, idx - 1)],
     ["Mover direita", () => idx < columns.length - 1 && swap(columns, idx, idx + 1)],
-    ["Renomear", () => (columns[idx] = prompt("Novo nome:", columns[idx]) || columns[idx])],
     ["Eliminar", () => columns.splice(idx, 1)]
   ];
 

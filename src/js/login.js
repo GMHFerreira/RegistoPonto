@@ -16,17 +16,9 @@ export async function renderLoginView(container) {
     const password = document.getElementById('password').value;
 
     try {
-      const res = await apiLogin(userId, password);
-
-      // Dynamically import the correct calendar module based on role
-      if (res.role === 'manager') {
-        const { initManagerCalendar } = await import('./manager.js');
-        await initManagerCalendar(container);
-      } else {
-        const { initOwnCalendar } = await import('./ownCalendar.js');
-        await initOwnCalendar(container);
-      }
-
+      await apiLogin(userId, password);
+      const { initOwnCalendar } = await import('./ownCalendar.js');
+      await initOwnCalendar(container);
     } catch (err) {
       console.error(err);
       errorDiv.textContent = 'ID ou palavra-passe inválidos';
